@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>クーポン使用</title>
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Sans", sans-serif;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d1f3d 50%, #1a1a1a 100%);
+      min-height: 100vh;
+      padding: 24px 16px;
+      color: #fff;
+    }
+    .card {
+      background: #0d0d0d;
+      border-radius: 22px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(212, 175, 55, 0.3);
+      max-width: 420px;
+      margin: 20px auto;
+      overflow: hidden;
+      border: 2px solid #d4af37;
+    }
+    .header {
+      background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+      color: #d4af37;
+      padding: 32px 20px 24px;
+      text-align: center;
+      border-bottom: 1.5px solid #d4af37;
+    }
+    .header .diamond { font-size: 32px; margin-bottom: 6px; filter: drop-shadow(0 0 10px rgba(212,175,55,0.8)); }
+    .header h1 {
+      font-size: 22px; font-weight: 700;
+      letter-spacing: 6px;
+      background: linear-gradient(135deg, #f9d976 0%, #d4af37 50%, #b8860b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 20px rgba(212,175,55,0.4);
+    }
+    .header .sub {
+      font-size: 10px; letter-spacing: 5px; margin-top: 6px;
+      color: #b8860b; font-weight: 500;
+    }
+    .body-area { padding: 28px 24px; background: #0d0d0d; }
+    .coupon-type-wrap {
+      text-align: center;
+      padding: 28px 16px;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2a1f1a 100%);
+      border-radius: 16px;
+      border: 1.5px solid #d4af37;
+      box-shadow: inset 0 0 20px rgba(212,175,55,0.1);
+    }
+    .coupon-type-label {
+      display: inline-block;
+      font-size: 10px;
+      color: #d4af37;
+      letter-spacing: 6px;
+      padding: 3px 12px;
+      margin-bottom: 12px;
+      border-top: 1px solid #d4af37;
+      border-bottom: 1px solid #d4af37;
+    }
+    .coupon-type {
+      font-size: 32px; font-weight: 900;
+      background: linear-gradient(135deg, #f9d976 0%, #d4af37 50%, #b8860b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 2px;
+      text-shadow: 0 0 30px rgba(212,175,55,0.5);
+    }
+    .coupon-id {
+      font-size: 10px; color: #8a7a4a; text-align: center; margin-bottom: 22px;
+      font-family: 'Courier New', monospace; letter-spacing: 2px;
+    }
+    .info-row {
+      display: flex; justify-content: space-between;
+      padding: 14px 4px;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+      font-size: 14px;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-row .label { color: #b8860b; font-size: 12px; letter-spacing: 2px; }
+    .info-row .value { font-weight: 700; color: #f9d976; }
+    .choice-section {
+      margin: 20px 0;
+      padding: 16px;
+      background: #1a1a1a;
+      border-radius: 12px;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+    }
+    .choice-section h3 {
+      font-size: 12px; color: #d4af37; margin-bottom: 12px;
+      font-weight: 600; letter-spacing: 3px; text-align: center;
+    }
+    .choice-option {
+      display: block;
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      background: #0d0d0d;
+      border: 2px solid rgba(212, 175, 55, 0.4);
+      border-radius: 12px;
+      font-size: 15px; font-weight: 500;
+      color: #f9d976;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .choice-option.selected {
+      border-color: #d4af37;
+      background: linear-gradient(135deg, #b8860b, #d4af37);
+      color: #000;
+      font-weight: 700;
+    }
+    .use-button {
+      display: block; width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, #b8860b 0%, #d4af37 25%, #f9d976 50%, #d4af37 75%, #b8860b 100%);
+      background-size: 200% 200%;
+      animation: gradMove 3s ease infinite;
+      color: #000; font-size: 16px; font-weight: 900;
+      letter-spacing: 3px;
+      border: none; border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(212, 175, 55, 0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+      cursor: pointer;
+      margin-top: 22px;
+    }
+    .use-button:disabled {
+      background: #444; color: #888; box-shadow: none; cursor: not-allowed;
+      animation: none;
+    }
+    @keyframes gradMove {
+      0%,100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    .notice {
+      font-size: 11px; color: #8a7a4a;
+      text-align: center; margin-top: 14px;
+      line-height: 1.8;
+      letter-spacing: 1px;
+    }
+    .used-badge {
+      text-align: center; padding: 40px 20px;
+    }
+    .used-badge .check {
+      font-size: 72px; margin-bottom: 16px;
+      filter: drop-shadow(0 0 10px rgba(212,175,55,0.6));
+    }
+    .used-badge h2 {
+      font-size: 22px; color: #d4af37; margin-bottom: 8px;
+      letter-spacing: 4px;
+    }
+    .used-badge p {
+      font-size: 22px; color: #b8860b; line-height: 1.8;
+    }
+    .error-box {
+      background: rgba(198, 40, 40, 0.15);
+      color: #ff8080;
+      padding: 16px; border-radius: 12px;
+      text-align: center; font-size: 14px; margin: 20px 0;
+      border: 1px solid rgba(198, 40, 40, 0.4);
+    }
+    .loading { text-align: center; padding: 40px; color: #b8860b; }
+    .spinner {
+      width: 32px; height: 32px; margin: 0 auto 12px;
+      border: 3px solid rgba(212, 175, 55, 0.2); border-top-color: #d4af37;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <div class="diamond">💎</div>
+      <h1>COUPON</h1>
+      <div class="sub">S P E C I A L &nbsp; M E M B E R</div>
+    </div>
+    <div class="body-area" id="bodyArea">
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>クーポン情報を確認中...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ====================================
+    // 設定値（★ここだけ環境に合わせて変更★）
+    // ====================================
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwfgY3Z-pYaf7TJzkS5hCaYcRg1fFyBAa0_GccmVcCEuI8hGujUC0uAnejk3QqN43wd/exec';
+    var COUPON_LIFF_ID = '2010024910-19B7AukT';
+
+    // ====================================
+    // クーポンID を取得（URLパラメータから）
+    // ====================================
+    var params = new URLSearchParams(window.location.search);
+    var liffState = params.get('liff.state') || '';
+    var COUPON_ID = params.get('id') || '';
+    if (!COUPON_ID && liffState) {
+      var m = decodeURIComponent(liffState).match(/id=(CP[\w-]+)/);
+      if (m) COUPON_ID = m[1];
+    }
+
+    var selectedChoice = '';
+    var couponData = null;
+
+    // ====================================
+    // LIFF初期化（COUPON_LIFF_IDが設定されてる場合のみ）
+    // ====================================
+    function initApp() {
+      if (COUPON_LIFF_ID) {
+        liff.init({ liffId: COUPON_LIFF_ID }).then(function() {
+          // ログインしてなくてもクーポン表示は可能。必要ならここでlogin
+          fetchCouponInfo();
+        }).catch(function(err) {
+          // LIFF初期化失敗してもクーポン表示は試みる
+          fetchCouponInfo();
+        });
+      } else {
+        // LIFFなしでも動くフォールバック
+        fetchCouponInfo();
+      }
+    }
+
+    // ====================================
+    // GASからクーポン情報を取得
+    // ====================================
+    function fetchCouponInfo() {
+      if (!COUPON_ID) {
+        showError('クーポンIDが指定されていません');
+        return;
+      }
+      fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'couponInfo', couponId: COUPON_ID })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(result) {
+        if (result.success && result.info) {
+          couponData = result.info;
+          render();
+        } else {
+          showError('クーポン情報の取得に失敗しました');
+        }
+      })
+      .catch(function(err) {
+        showError('通信エラー：サーバーに接続できませんでした');
+      });
+    }
+
+    // ====================================
+    // 画面描画
+    // ====================================
+    function render() {
+      var area = document.getElementById('bodyArea');
+      if (!couponData || couponData.status === 'NOT_FOUND') {
+        area.innerHTML = '<div class="error-box">クーポンが見つかりませんでした</div>';
+        return;
+      }
+      if (couponData.status === '使用済み') {
+        area.innerHTML = renderUsedState(couponData.usedAt, couponData.usedChoice);
+        return;
+      }
+      if (couponData.status === '期限切れ') {
+        area.innerHTML = '<div class="error-box">このクーポンは期限切れです</div>';
+        return;
+      }
+
+      var html = '<div class="coupon-type-wrap">';
+      html += '<div class="coupon-type-label">PREMIUM OFFER</div>';
+      var typeDisplay = couponData.couponType;
+      if (typeDisplay && typeDisplay.indexOf('選択式') >= 0) {
+        html += '<div class="coupon-type" style="text-align:center;">選択式</div>';
+        html += '<div style="font-size:22px;font-weight:700;color:#f9d976;text-align:center;margin-top:8px;line-height:1.6;">';
+        html += '本指名無料<br><span style="font-size:16px;color:#d4af37;">or</span><br>60分3900円</div>';
+      } else {
+        html += '<div class="coupon-type">' + escapeHtml(typeDisplay) + '</div>';
+      }
+      html += '</div>';
+      html += '<div class="coupon-id">ID: ' + escapeHtml(couponData.couponId) + '</div>';
+      html += '<div class="info-row"><span class="label">CATEGORY</span><span class="value">' + escapeHtml(couponData.trigger) + '</span></div>';
+      html += '<div class="info-row"><span class="label">VALID UNTIL</span><span class="value">' + escapeHtml(couponData.expiresStr) + '</span></div>';
+
+      var needChoice = (couponData.trigger === '2回目1st' || couponData.trigger === '2回目2nd');
+      if (needChoice) {
+        html += '<div class="choice-section">';
+        html += '<h3>PLEASE SELECT</h3>';
+        html += '<div class="choice-option" id="opt1" onclick="selectChoice(\'本指名無料\')">① 本指名 無料</div>';
+        html += '<div class="choice-option" id="opt2" onclick="selectChoice(\'60分3900円\')">② 60分 3,900円</div>';
+        html += '</div>';
+        html += '<button class="use-button" id="useBtn" disabled onclick="useCoupon()">選択してください</button>';
+      } else {
+        html += '<button class="use-button" id="useBtn" onclick="useCoupon()">このクーポンを使用する</button>';
+      }
+      html += '<p class="notice">※ボタンを押すと「使用済み」になります。<br>ご来店時にスタッフにこの画面をお見せください。</p>';
+      area.innerHTML = html;
+    }
+
+    function selectChoice(c) {
+      selectedChoice = c;
+      document.getElementById('opt1').classList.toggle('selected', c === '本指名無料');
+      document.getElementById('opt2').classList.toggle('selected', c === '60分3900円');
+      var btn = document.getElementById('useBtn');
+      btn.disabled = false;
+      btn.textContent = 'このクーポンを使用する';
+    }
+
+    // ====================================
+    // クーポン使用処理
+    // ====================================
+    function useCoupon() {
+      var btn = document.getElementById('useBtn');
+      btn.disabled = true; btn.textContent = '処理中...';
+      fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+          action: 'markCouponUsed',
+          couponId: COUPON_ID,
+          choice: selectedChoice
+        })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(result) {
+        var area = document.getElementById('bodyArea');
+        if (result.success) {
+          area.innerHTML = renderUsedState(result.usedAt, selectedChoice || (couponData && couponData.usedChoice));
+        } else {
+          area.innerHTML = '<div class="error-box">' + (result.message || '使用処理に失敗しました') + '</div>';
+        }
+      })
+      .catch(function(err) {
+        var bbtn = document.getElementById('useBtn');
+        if (bbtn) { bbtn.disabled = false; bbtn.textContent = '再試行'; }
+        alert('エラー：サーバーに接続できませんでした');
+      });
+    }
+
+    function renderUsedState(usedAt, choice) {
+      var typeStr = couponData ? couponData.couponType : '';
+      var h = '<div class="used-badge">';
+      h += '<div class="check">✅</div>';
+      h += '<h2>USED</h2>';
+      h += '<p>' + escapeHtml(typeStr) + '<br>';
+      if (choice) h += '選択: <strong style="color:#f9d976">' + escapeHtml(choice) + '</strong><br>';
+      h += '使用日時: ' + escapeHtml(usedAt || '不明') + '</p>';
+      h += '<p style="margin-top:20px;color:#d4af37;font-size:20px;font-weight:600;letter-spacing:2px;">スタッフにこの画面をお見せください</p>';
+      h += '</div>';
+      return h;
+    }
+
+    function showError(msg) {
+      document.getElementById('bodyArea').innerHTML = '<div class="error-box">' + escapeHtml(msg) + '</div>';
+    }
+
+    function escapeHtml(s) {
+      return String(s || '').replace(/[&<>"']/g, function(c){
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+      });
+    }
+
+    // 起動
+    initApp();
+  </script>
+</body>
+</html>
