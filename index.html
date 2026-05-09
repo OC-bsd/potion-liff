@@ -60,16 +60,16 @@ body { font-family:'Helvetica Neue',Arial,'Hiragino Sans',sans-serif; background
 
 <!-- 完了画面 -->
 <div class="container hidden" id="done-view">
-  <div class="done-icon">✅</div>
-  <div class="done-msg">登録完了！</div>
-  <div class="done-sub">
+  <div class="done-icon" id="done-icon">✅</div>
+  <div class="done-msg" id="done-msg">登録完了！</div>
+  <div class="done-sub" id="done-sub">
     ありがとうございます！<br>
     友だち追加画面へ移動します...
   </div>
-  <button class="btn btn-primary" style="margin-top:24px;" onclick="addFriend()">
+  <button class="btn btn-primary" style="margin-top:24px;" id="done-btn" onclick="addFriend()">
     友だち追加する
   </button>
-  <div style="margin-top:8px;font-size:12px;color:#aaa;">自動で移動しない場合はボタンを押してください</div>
+  <div style="margin-top:8px;font-size:12px;color:#aaa;" id="done-hint">自動で移動しない場合はボタンを押してください</div>
 </div>
 
 <!-- エラー画面 -->
@@ -209,8 +209,7 @@ function doRegister() {
   .then(function(res) { return res.json(); })
   .then(function(result) {
     if (result.success) {
-      // 完了画面を表示→ボタンタップで友だち追加へ
-      showDoneView();
+      showDoneView(result.isRepeater);
     } else {
       showError('登録エラー', result.message || '登録に失敗しました');
     }
@@ -220,9 +219,15 @@ function doRegister() {
   });
 }
 
-function showDoneView() {
+function showDoneView(isRepeater) {
   document.getElementById('register-view').classList.add('hidden');
   document.getElementById('done-view').classList.remove('hidden');
+  if (isRepeater) {
+    document.getElementById('done-icon').textContent = '🍾';
+    document.getElementById('done-msg').textContent = 'ご来店ありがとうございます';
+    document.getElementById('done-sub').textContent = '';
+    document.getElementById('done-btn').textContent = '公式LINEへ移動';
+  }
 }
 function addFriend() {
   window.location.href = FRIEND_ADD_URL;
