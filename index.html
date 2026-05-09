@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LINE登録</title>
+<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Helvetica Neue',Arial,'Hiragino Sans',sans-serif; background:linear-gradient(135deg,#ffb6c1,#fff0f5); min-height:100vh; display:flex; align-items:center; justify-content:center; }
+.container { background:#fff; border-radius:20px; padding:32px 24px; max-width:360px; width:90%; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,.12); }
+.shop-name { font-size:20px; font-weight:700; color:#c2185b; margin-bottom:4px; }
+.shop-sub { color:#888; font-size:12px; margin-bottom:20px; }
+.qr-badge { display:inline-block; background:#fce4ec; color:#c2185b; font-size:18px; font-weight:700; padding:8px 20px; border-radius:30px; margin-bottom:20px; }
+.msg { font-size:14px; color:#333; line-height:1.7; margin-bottom:20px; }
+.consent-row { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:16px; margin-bottom:8px; font-size:13px; color:#555; }
+.consent-row input[type="checkbox"] { width:18px; height:18px; accent-color:#c2185b; cursor:pointer; flex-shrink:0; }
+.consent-row a { color:#c2185b; text-decoration:underline; cursor:pointer; }
+.btn { display:block; width:100%; padding:16px; border:none; border-radius:12px; font-size:17px; font-weight:700; cursor:pointer; transition:all .2s; }
+.btn-primary { background:linear-gradient(135deg,#06c755,#05a847); color:#fff; }
+.btn-primary:active { transform:scale(.97); }
+.btn-primary:disabled { background:#ccc; cursor:default; }
+.status { margin-top:12px; font-size:14px; color:#888; }
+.done-icon { font-size:64px; margin-bottom:16px; }
+.done-msg { font-size:20px; font-weight:700; color:#333; margin-bottom:8px; }
+.done-sub { font-size:14px; color:#888; line-height:1.6; }
+.hidden { display:none; }
+.loading { display:inline-block; width:20px; height:20px; border:3px solid #fff; border-top-color:transparent; border-radius:50%; animation:spin .8s linear infinite; vertical-align:middle; margin-right:8px; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* 同意文オーバーレイ */
+.overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.5); z-index:100; align-items:center; justify-content:center; }
+.overlay.show { display:flex; }
+.policy-box { background:#fff; border-radius:16px; padding:24px 20px; max-width:340px; width:90%; max-height:80vh; overflow-y:auto; position:relative; }
+.policy-box h2 { font-size:16px; color:#c2185b; margin-bottom:12px; }
+.policy-box p { font-size:13px; color:#333; line-height:1.8; margin-bottom:12px; }
+.policy-box .close-btn { display:block; width:100%; padding:12px; border:none; border-radius:10px; background:#c2185b; color:#fff; font-size:15px; font-weight:700; cursor:pointer; margin-top:16px; }
+</style>
+</head>
+<body>
+
+<!-- 登録画面 -->
+<div class="container" id="register-view">
+  <div class="shop-name">ポーション</div>
+  <div class="shop-sub">川越コンカフェ＆ラウンジ</div>
+  <div class="qr-badge" id="qr-label">QR No.--</div>
+  <div class="msg">
+    ご来店ありがとうございます！<br>
+    ボタンを押してLINE登録をお願いします。
+  </div>
+  <button class="btn btn-primary" id="register-btn" onclick="doRegister()" disabled>
+    LINE登録する
+  </button>
+  <div class="consent-row">
+    <input type="checkbox" id="consent-cb" checked onchange="toggleBtn()">
+    <label for="consent-cb"><a onclick="showPolicy()">個人情報の取り扱いについて</a>に同意する</label>
+  </div>
+  <div class="status" id="status">読み込み中...</div>
+</div>
+
+<!-- 完了画面 -->
+<div class="container hidden" id="done-view">
+  <div class="done-icon">✅</div>
+  <div class="done-msg">登録完了！</div>
+  <div class="done-sub">
+    ありがとうございます！<br>
+    友だち追加画面へ移動します...
+  </div>
+  <button class="btn btn-primary" style="margin-top:24px;" onclick="addFriend()">
+    友だち追加する
+  </button>
+  <div style="margin-top:8px;font-size:12px;color:#aaa;">自動で移動しない場合はボタンを押してください</div>
+</div>
+
+<!-- エラー画面 -->
+<div class="container hidden" id="error-view">
+  <div class="done-icon">⚠️</div>
+  <div class="done-msg" id="error-title">エラー</div>
+  <div class="done-sub" id="error-msg">しばらくしてからもう一度お試しください。</div>
+</div>
+
+<!-- 同意文オーバーレイ -->
+<div class="overlay" id="policy-overlay" onclick="closePolicy(event)">
+  <div class="policy-box" onclick="event.stopPropagation()">
+    <h2>個人情報の取り扱いについて</h2>
+    <p>当店では、お客様により良いサービスを提供するため、以下の個人情報を取得・利用いたします。</p>
+    <p><strong>取得する情報</strong><br>
+    LINEアカウント情報（表示名・ユーザーID）、ご来店情報</p>
+    <p><strong>利用目的</strong><br>
+    ・お客様の来店管理およびサービス向上<br>
+    ・キャンペーン等のお知らせ配信<br>
+    ・お客様へのご連絡</p>
+    <p><strong>第三者提供</strong><br>
+    お客様の同意なく、第三者に個人情報を提供することはありません。</p>
+    <p><strong>お問い合わせ</strong><br>
+    個人情報に関するお問い合わせは、店舗スタッフまでお申し付けください。</p>
+    <button class="close-btn" onclick="closePolicy()">閉じる</button>
+  </div>
+</div>
+
+<script>
+// ====================================
+// 設定値（★ここだけ環境に合わせて変更★）
+// ====================================
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbwfgY3Z-pYaf7TJzkS5hCaYcRg1fFyBAa0_GccmVcCEuI8hGujUC0uAnejk3QqN43wd/exec';
+var LIFF_ID = '2010024910-xLuFMeKm';
+var FRIEND_ADD_URL = 'https://line.me/R/ti/p/@294zdzqm';
+
+// ====================================
+// 初期化
+// ====================================
+var lineProfile = null;
+var liffReady = false;
+
+// QR番号をURLから取得（LIFF経由のパラメータ対応）
+function getQrNum() {
+  var url = window.location.href;
+  var search = window.location.search || '';
+  var hash = window.location.hash || '';
+  var found = '';
+
+  // 1. searchから取得
+  var p = new URLSearchParams(search);
+  if (p.get('qr')) { found = p.get('qr'); }
+
+  // 2. liff.stateから取得（LIFFがパラメータをliff.stateに格納する場合）
+  if (!found) {
+    var ls = p.get('liff.state') || '';
+    if (ls) {
+      var m = decodeURIComponent(ls).match(/qr=([^&]*)/);
+      if (m) found = m[1];
+    }
+  }
+
+  // 3. hashから取得（LIFFはliff.stateとしてhashに入れることもある）
+  if (!found && hash) {
+    var decoded = decodeURIComponent(hash);
+    var m2 = decoded.match(/qr=([^&]*)/);
+    if (m2) found = m2[1];
+  }
+
+  // 4. href全体から最終手段で探す
+  if (!found) {
+    var m3 = url.match(/[?&#]qr=([^&#]*)/);
+    if (m3) found = m3[1];
+  }
+
+  return found || '0';
+}
+var QR_NUM = getQrNum();
+document.getElementById('qr-label').textContent = 'QR No.' + QR_NUM;
+
+// LIFF初期化
+document.getElementById('status').textContent = 'LIFF初期化中...';
+
+liff.init({ liffId: LIFF_ID }).then(function() {
+  document.getElementById('status').textContent = 'ログイン確認中...';
+  if (!liff.isLoggedIn()) {
+    document.getElementById('status').textContent = 'LINEログインへ移動中...';
+    // ★ redirectUri にQR番号を含めてログイン後もパラメータを保持
+    var redirectBack = window.location.href;
+    if (QR_NUM && QR_NUM !== '0' && redirectBack.indexOf('qr=') === -1) {
+      redirectBack += (redirectBack.indexOf('?') >= 0 ? '&' : '?') + 'qr=' + QR_NUM;
+    }
+    liff.login({ redirectUri: redirectBack });
+    return;
+  }
+  document.getElementById('status').textContent = 'プロフィール取得中...';
+  return liff.getProfile();
+}).then(function(profile) {
+  if (!profile) {
+    document.getElementById('status').textContent = 'ログイン待ち';
+    return;
+  }
+  lineProfile = profile;
+  liffReady = true;
+  toggleBtn();
+  document.getElementById('status').textContent = profile.displayName + 'さん';
+}).catch(function(err) {
+  document.getElementById('status').textContent = 'エラー: ' + (err.message || err);
+});
+
+// ====================================
+// 機能
+// ====================================
+function toggleBtn() {
+  var cb = document.getElementById('consent-cb').checked;
+  document.getElementById('register-btn').disabled = !(cb && liffReady);
+}
+
+function doRegister() {
+  var btn = document.getElementById('register-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading"></span>登録中...';
+  document.getElementById('status').textContent = '';
+
+  var data = {
+    action: 'qrRegister',
+    lineId: lineProfile.userId,
+    displayName: lineProfile.displayName || '',
+    qrNum: QR_NUM
+  };
+
+  fetch(GAS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(data)
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(result) {
+    if (result.success) {
+      // ★ 自動リダイレクトを試みる（Android Chromeでブロックされる場合あり）
+      if (liff.isInClient()) {
+        window.location.href = FRIEND_ADD_URL;
+      } else {
+        var w = window.open(FRIEND_ADD_URL);
+        if (!w) { showDoneView(); }
+      }
+      // フォールバック: 2秒後にまだページにいたら完了画面表示
+      setTimeout(function() { showDoneView(); }, 2000);
+    } else {
+      showError('登録エラー', result.message || '登録に失敗しました');
+    }
+  })
+  .catch(function(err) {
+    showError('通信エラー', 'サーバーに接続できませんでした');
+  });
+}
+
+function showDoneView() {
+  document.getElementById('register-view').classList.add('hidden');
+  document.getElementById('done-view').classList.remove('hidden');
+}
+function addFriend() {
+  if (liff.isInClient()) {
+    window.location.href = FRIEND_ADD_URL;
+  } else {
+    window.open(FRIEND_ADD_URL);
+  }
+}
+
+function showPolicy() {
+  document.getElementById('policy-overlay').classList.add('show');
+}
+
+function closePolicy(e) {
+  if (!e || e.target === document.getElementById('policy-overlay')) {
+    document.getElementById('policy-overlay').classList.remove('show');
+  }
+}
+
+function showError(title, msg) {
+  document.getElementById('register-view').classList.add('hidden');
+  document.getElementById('error-view').classList.remove('hidden');
+  document.getElementById('error-title').textContent = title;
+  document.getElementById('error-msg').textContent = msg;
+}
+</script>
+</body>
+</html>
