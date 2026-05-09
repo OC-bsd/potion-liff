@@ -209,15 +209,8 @@ function doRegister() {
   .then(function(res) { return res.json(); })
   .then(function(result) {
     if (result.success) {
-      // ★ 自動リダイレクトを試みる（Android Chromeでブロックされる場合あり）
-      if (liff.isInClient()) {
-        window.location.href = FRIEND_ADD_URL;
-      } else {
-        var w = window.open(FRIEND_ADD_URL);
-        if (!w) { showDoneView(); }
-      }
-      // フォールバック: 2秒後にまだページにいたら完了画面表示
-      setTimeout(function() { showDoneView(); }, 2000);
+      // 完了画面を表示→ボタンタップで友だち追加へ
+      showDoneView();
     } else {
       showError('登録エラー', result.message || '登録に失敗しました');
     }
@@ -232,11 +225,7 @@ function showDoneView() {
   document.getElementById('done-view').classList.remove('hidden');
 }
 function addFriend() {
-  if (liff.isInClient()) {
-    window.location.href = FRIEND_ADD_URL;
-  } else {
-    window.open(FRIEND_ADD_URL);
-  }
+  window.location.href = FRIEND_ADD_URL;
 }
 
 function showPolicy() {
