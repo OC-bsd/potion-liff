@@ -230,7 +230,13 @@ function showDoneView(isRepeater) {
   }
 }
 function addFriend() {
-  window.location.href = FRIEND_ADD_URL;
+  if (liff.isInClient()) {
+    // LIFF内（LINE WebView）→ 外部ブラウザで開く（Android対応）
+    liff.openWindow({ url: FRIEND_ADD_URL, external: true });
+  } else {
+    // 通常ブラウザ → そのまま遷移
+    window.location.href = FRIEND_ADD_URL;
+  }
 }
 
 function showPolicy() {
