@@ -293,7 +293,9 @@
       }
       html += '</div>';
       html += '<div class="coupon-id">ID: ' + escapeHtml(couponData.couponId) + '</div>';
-      html += '<div class="info-row"><span class="label">CATEGORY</span><span class="value">' + escapeHtml(couponData.trigger) + '</span></div>';
+      if (couponData.trigger && couponData.trigger !== '手動配布') {
+        html += '<div class="info-row"><span class="label">CATEGORY</span><span class="value">' + escapeHtml(couponData.trigger) + '</span></div>';
+      }
       html += '<div class="info-row"><span class="label">VALID UNTIL</span><span class="value">' + escapeHtml(couponData.expiresStr) + '</span></div>';
 
       var needChoice = (couponData.trigger === '2回目1st' || couponData.trigger === '2回目2nd');
