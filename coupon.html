@@ -72,6 +72,8 @@
       background-clip: text;
       letter-spacing: 2px;
       text-shadow: 0 0 30px rgba(212,175,55,0.5);
+      white-space: pre-line;
+      line-height: 1.3;
     }
     .coupon-id {
       font-size: 10px; color: #8a7a4a; text-align: center; margin-bottom: 22px;
@@ -193,7 +195,7 @@
     // ====================================
     // 設定値（★ここだけ環境に合わせて変更★）
     // ====================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbxzt1PRNmnZjaynTRGmt_kN5QgB11S6UKVdwFQONZq3pz0va4cz4slaw20bI_EHLmY8/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwfgY3Z-pYaf7TJzkS5hCaYcRg1fFyBAa0_GccmVcCEuI8hGujUC0uAnejk3QqN43wd/exec';
     var COUPON_LIFF_ID = '2010024910-19B7AukT';
 
     // ====================================
@@ -284,12 +286,17 @@
       var html = '<div class="coupon-type-wrap">';
       html += '<div class="coupon-type-label">PREMIUM OFFER</div>';
       var typeDisplay = couponData.couponType;
+      // リテラル 
+（バックスラッシュ+n）を本物の改行文字に変換
+      if (typeDisplay) typeDisplay = String(typeDisplay).replace(/\n/g, '
+');
       if (typeDisplay && typeDisplay.indexOf('選択式') >= 0) {
         html += '<div class="coupon-type" style="text-align:center;">選択式</div>';
         html += '<div style="font-size:22px;font-weight:700;color:#f9d976;text-align:center;margin-top:8px;line-height:1.6;">';
         html += '本指名無料<br><span style="font-size:16px;color:#d4af37;">or</span><br>60分3900円</div>';
       } else {
-        html += '<div class="coupon-type">' + escapeHtml(typeDisplay) + '</div>';
+        var fs = _pickCouponTypeFontSize(typeDisplay);
+        html += '<div class="coupon-type" style="font-size:' + fs + 'px;">' + escapeHtml(typeDisplay) + '</div>';
       }
       html += '</div>';
       html += '<div class="coupon-id">ID: ' + escapeHtml(couponData.couponId) + '</div>';
@@ -374,6 +381,35 @@
       return String(s || '').replace(/[&<>"']/g, function(c){
         return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
       });
+    }
+
+    /**
+     * couponType の文字量から font-size(px) を自動決定
+     * 全角=2, 半角=1 で最長行の幅を計算 → 段階選択
+     */
+    function _pickCouponTypeFontSize(text) {
+      var t = String(text || '').trim();
+      if (!t) return 32;
+      var lines = t.split(/
+?
+/);
+      function w(s) {
+        var n = 0;
+        for (var i = 0; i < s.length; i++) n += (s.charCodeAt(i) > 0x7F) ? 2 : 1;
+        return n;
+      }
+      var maxLine = 0;
+      for (var i = 0; i < lines.length; i++) {
+        var lw = w(lines[i]);
+        if (lw > maxLine) maxLine = lw;
+      }
+      if (maxLine <= 8)  return 32;
+      if (maxLine <= 12) return 28;
+      if (maxLine <= 16) return 24;
+      if (maxLine <= 20) return 22;
+      if (maxLine <= 26) return 18;
+      if (maxLine <= 34) return 15;
+      return 13;
     }
 
     // 起動
