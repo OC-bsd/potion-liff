@@ -195,7 +195,7 @@
     // ====================================
     // 設定値（★ここだけ環境に合わせて変更★）
     // ====================================
-    var GAS_URL = 'https://script.google.com/macros/s/AKfycbwfgY3Z-pYaf7TJzkS5hCaYcRg1fFyBAa0_GccmVcCEuI8hGujUC0uAnejk3QqN43wd/exec';
+    var GAS_URL = 'https://script.google.com/macros/s/AKfycbxzt1PRNmnZjaynTRGmt_kN5QgB11S6UKVdwFQONZq3pz0va4cz4slaw20bI_EHLmY8/exec';
     var COUPON_LIFF_ID = '2010024910-19B7AukT';
 
     // ====================================
@@ -286,10 +286,8 @@
       var html = '<div class="coupon-type-wrap">';
       html += '<div class="coupon-type-label">PREMIUM OFFER</div>';
       var typeDisplay = couponData.couponType;
-      // リテラル 
-（バックスラッシュ+n）を本物の改行文字に変換
-      if (typeDisplay) typeDisplay = String(typeDisplay).replace(/\n/g, '
-');
+      // リテラル \n（バックスラッシュ+n）を本物の改行文字に変換
+      if (typeDisplay) typeDisplay = String(typeDisplay).replace(/\\n/g, '\n');
       if (typeDisplay && typeDisplay.indexOf('選択式') >= 0) {
         html += '<div class="coupon-type" style="text-align:center;">選択式</div>';
         html += '<div style="font-size:22px;font-weight:700;color:#f9d976;text-align:center;margin-top:8px;line-height:1.6;">';
@@ -339,7 +337,9 @@
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({
-          action: COUPON_TYPE_PARAM === 'manual' ? 'markManualCouponUsed' : 'markCouponUsed',
+          action: COUPON_TYPE_PARAM === 'birthday' ? 'markBirthdayCouponUsed'
+                : COUPON_TYPE_PARAM === 'manual'   ? 'markManualCouponUsed'
+                :                                    'markCouponUsed',
           couponId: COUPON_ID,
           choice: selectedChoice
         })
@@ -390,9 +390,7 @@
     function _pickCouponTypeFontSize(text) {
       var t = String(text || '').trim();
       if (!t) return 32;
-      var lines = t.split(/
-?
-/);
+      var lines = t.split(/\r?\n/);
       function w(s) {
         var n = 0;
         for (var i = 0; i < s.length; i++) n += (s.charCodeAt(i) > 0x7F) ? 2 : 1;
